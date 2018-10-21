@@ -1,18 +1,12 @@
-
-window.addEventListener('load', new_game);
-document.querySelector('.restart').addEventListener('click',new_game);
-document.querySelector('.deck').addEventListener('click',card_clicked);
-let opened_cards = []; //saves the two cards that are being compared each move
-let matches = 0;
-let moves = 0; //this variable save the number of PAIRS that were opened and compared
-let stars = document.querySelectorAll('.fa-star');
-let timer; //timer for keeping cards open
-
-
 /*
- * Create a list that holds all of your cards (8 pairs)
+ * Create a list that holds all of your cards
  */
- let cards=["diamond","diamond",
+var opened_cards = []; //saves the two cards that are being compared each move
+var matches = 0;
+var moves = 0; //this variable save the number of PAIRS that were opened and compared
+var stars = document.querySelectorAll('.fa-star');
+var timer; //timer for keeping cards open
+var symbols=["diamond","diamond",
  			"paper-plane-o","paper-plane-o",
  			"anchor","anchor",
  			"bolt","bolt",
@@ -20,6 +14,8 @@ let timer; //timer for keeping cards open
  			"leaf","leaf",
  			"bicycle","bicycle",
  			"bomb","bomb"];
+
+document.querySelector('.restart').addEventListener('click',new_game);
 
 
 /*
@@ -31,7 +27,7 @@ let timer; //timer for keeping cards open
 
 // Shuffle function from http://stackoverflow.com/a/2450976
 function shuffle(array) {
-    let currentIndex = array.length, temporaryValue, randomIndex;
+    var currentIndex = array.length, temporaryValue, randomIndex;
 
     while (currentIndex !== 0) {
         randomIndex = Math.floor(Math.random() * currentIndex);
@@ -40,38 +36,47 @@ function shuffle(array) {
         array[currentIndex] = array[randomIndex];
         array[randomIndex] = temporaryValue;
     }
+
+    return array;
 }
 
-//start a new game
-function new_game()
-{
-	//every new game we empty the array and reinitialize the matches and moves variables
-	opened_cards = [];
-	matches = 0;
-	moves = 0;
-	
-	//Initialize the moves text to zero every new game
-	document.querySelector('.moves').textContent = moves;
+function prepare_deck(){
+	//First step: shuffle the list of symbols using the provided "shuffle" method above
+	shuffle(symbols);
 
-	//All 3 stars are visible at the begining of each game
-	for(let i=0;i<3;i++)
-	{
-		stars[i].style.visibility = "visible";
-	}
-
-	//First step: shuffle the list of cards using the provided "shuffle" method above
-	shuffle(cards);
 
 	//Second step: create deck HTML
-	let cards_html_string="";
-	for(let i =1;i<=cards.length;i++){
-		cards_html_string = cards_html_string + "<li class='card'><i class='fa fa-"+ cards[i-1] + "'></i></li>";
+	var cards_html_string="";
+	for(var i = 1; i <= symbols.length ; i++){
+		cards_html_string = cards_html_string + "<li class='card' data-symbol='"+ symbols[i-1] + "'><i class='fa fa-"+ symbols[i-1] + "'></i></li>";
 	}
 
 	//Third step: update deck elemnt's innerHTML 
-	let deck_element = document.querySelector('.deck');
+	var deck_element = document.querySelector('.deck');
 	deck_element.innerHTML = cards_html_string;
 }
+
+//call new_game() function to play
+new_game();
+
+function new_game(){
+
+	reinitialize();
+	prepare_deck();
+
+	/*
+ 	* Create a list that holds all of your cards
+ 	*/
+
+	var cards = document.querySelectorAll('.card');
+ 	cards.forEach(function(card){
+ 		card.addEventListener('click',function(e)
+ 		{
+ 			card_clicked(card,e);
+ 		});
+ 	});
+}
+ 
 
 /*
  * set up the event listener for a card. If a card is clicked:
@@ -83,48 +88,58 @@ function new_game()
  *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
  *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
  */
+ 
+ function card_clicked(card,e){
 
-function card_clicked(e)
-{
-	//if user clicks same opened card, alert msg and return 
-	//I added this condition: opened_cards.length === 1, to make sure this is the second card
-	if(opened_cards.length === 1 && e.target === opened_cards[0])
-	{
-		alert("This card is already open, please choose another card");
-		return;
-	}
-
-	display_symbol(e.target);
-	opened_cards.push(e.target);
-	
-	
-	if(opened_cards.length === 2)//new pair to compare
-	{
-		update_moves();//updates moves and stars(depending on moves value)
-
-		if(opened_cards[0].firstElementChild.classList.item(1) === opened_cards[1].firstElementChild.classList.item(1))
+ 	if(opened_cards.length === 1 && e.target === opened_cards[0])
 		{
-			matched();
+			alert("This card is already open, please choose another card");
+			return;
+		}
 
-			//if number of matches is 8, this means all cards (8 pairs) are matched
-			if(matches === 8)
+		//display symbol on the card.
+		display_symbol(card);
+
+		opened_cards.push(card);
+
+		if(opened_cards.length === 2)//new pair to compare
+		{
+			if(opened_cards[0].dataset.symbol === opened_cards[1].dataset.symbol)
 			{
-				alert("Total number of moves: " + moves);
+				matched();
+				
+				//after calling matched(), check if we reached end of game(8 matches), if yes then alert message to user.
+				var output = "";
+ 				if(matches === 8){
+			 		if(moves <= 7){
+			 			output = "WOW, Excellent Job!";
+			 		}
+			 		
+			 		if(moves>7 && moves<=13){
+			 			output = "Good Job!";
+			 		}
+			 		
+			 		if(moves>13){
+			 			output = "You can do better."
+			 		}
+
+			 		alert(output + " You finished the game using " + moves + " mismatches.");
+			 	}
+			}
+			else
+			{
+				not_matched();
+				update_moves();//updates moves and stars(depending on moves value)
 			}
 		}
-		else
-		{
-			not_matched();
-		}
+ }
 
-	}
-}
-
-function display_symbol(card)
+ function display_symbol(c)
 {
 	//display symbole of the last card clicked
-	card.classList.add('open','show');
+	c.classList.add('open','show');
 }
+
 
 function update_moves()
 {
@@ -135,21 +150,22 @@ function update_moves()
 	document.querySelector('.moves').textContent = moves;
 
 	//update stars depemding on moves value
-	if(moves > 10 ) //lose one star if more than 10 moves
+	if(moves > 7 ) //lose one star if more than 10 moves
 	{
 		stars[0].style.visibility = "hidden";
 	}
 
-	if(moves > 15 ) //lose the second star if more than 15 moves
+	if(moves > 13 ) //lose the second star if more than 15 moves
 	{
 		stars[1].style.visibility = "hidden";
 	}
 
-	if(moves > 20 ) //lose the third (last) star if more than 20 moves
+	if(moves > 18 ) //lose the third (last) star if more than 20 moves
 	{
 		stars[2].style.visibility ="hidden";
 	}
 }
+
 
 function matched()
 {
@@ -157,12 +173,13 @@ function matched()
 	opened_cards[0].classList.add('match');
 	opened_cards[1].classList.add('match');
 	
-	//remove event listener to the matched cards
-	opened_cards[0].removeEventListener('click',card_clicked);
-	opened_cards[1].removeEventListener('click',card_clicked);
-	
 	//increase matches counter
 	matches++;
+
+	//remove event listener from matched cards
+	opened_cards.forEach(function(oc){
+		oc.removeEventListener('click',card_clicked);
+	});
 
 	opened_cards = [];
 }
@@ -177,6 +194,22 @@ function not_matched()
 		});
 		opened_cards = [];
 	},1000);
-	// opened_cards[0].classList.remove('open','show');
-	// opened_cards[1].classList.remove('open','show');
+}
+
+//for EVERY game re/initialize variables
+function reinitialize()
+{
+	//every new game we empty the array and reinitialize the matches and moves variables
+	opened_cards = [];
+	matches = 0;
+	moves = 0;
+	
+	//Initialize the moves text to zero every new game
+	document.querySelector('.moves').textContent = moves;
+
+	//All 3 stars are visible at the begining of each game
+	for(var i=0;i<3;i++)
+	{
+		stars[i].style.visibility = "visible";
+	}
 }
