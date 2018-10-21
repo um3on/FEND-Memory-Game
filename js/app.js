@@ -46,6 +46,7 @@ function prepare_deck(){
 
 
 	//Second step: create deck HTML
+	//used data attribute as in Mike's webinar
 	var cards_html_string="";
 	for(var i = 1; i <= symbols.length ; i++){
 		cards_html_string = cards_html_string + "<li class='card' data-symbol='"+ symbols[i-1] + "'><i class='fa fa-"+ symbols[i-1] + "'></i></li>";
@@ -88,7 +89,7 @@ function new_game(){
  *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
  *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
  */
- 
+
  function card_clicked(card,e){
 
  	if(opened_cards.length === 1 && e.target === opened_cards[0])
