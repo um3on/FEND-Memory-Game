@@ -1,5 +1,6 @@
 # Memory Game Project
-A game for test your memory. Try to remember the places of 2 matching symbols.
+A game for testing memory, by trying to remember the places of 2 matching symbols.
+
 
 ## Table of Contents
 
