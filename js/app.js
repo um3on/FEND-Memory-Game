@@ -1,12 +1,12 @@
 /*
  * Create a list that holds all of your cards
  */
-var opened_cards = []; //saves the two cards that are being compared each move
-var matches = 0;
-var moves = 0; //this variable save the number of PAIRS that were opened and compared
-var stars = document.querySelectorAll('.fa-star');
-var timer; //timer for keeping cards open
-var symbols=["diamond","diamond",
+
+let opened_cards = []; //saves the two cards that are being compared each move
+let matches = 0;
+let moves = 0; //this letiable save the number of PAIRS that were opened and compared
+let stars = document.querySelectorAll('.fa-star');
+let symbols=["diamond","diamond",
  			"paper-plane-o","paper-plane-o",
  			"anchor","anchor",
  			"bolt","bolt",
@@ -14,6 +14,36 @@ var symbols=["diamond","diamond",
  			"leaf","leaf",
  			"bicycle","bicycle",
  			"bomb","bomb"];
+
+let first ="", second = "";//first and second cards to compare
+
+let minutesLabel = document.getElementById("minutes");
+let secondsLabel = document.getElementById("seconds");
+let totalSeconds = 0;
+let setIntervalValue ="";
+
+
+// **************** Modal  ************************
+//Code: https://www.w3schools.com/howto/howto_css_modals.asp
+
+// Get the modal
+let modal = document.getElementById('myModal');
+// Get the <span> element that closes the modal
+let span = document.getElementsByClassName("close")[0];
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+// *************************************************
+
 
 document.querySelector('.restart').addEventListener('click',new_game);
 
@@ -27,7 +57,7 @@ document.querySelector('.restart').addEventListener('click',new_game);
 
 // Shuffle function from http://stackoverflow.com/a/2450976
 function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
+    let currentIndex = array.length, temporaryValue, randomIndex;
 
     while (currentIndex !== 0) {
         randomIndex = Math.floor(Math.random() * currentIndex);
@@ -40,27 +70,27 @@ function shuffle(array) {
     return array;
 }
 
-function prepare_deck(){
+function prepare_deck() {
 	//First step: shuffle the list of symbols using the provided "shuffle" method above
 	shuffle(symbols);
 
 
 	//Second step: create deck HTML
 	//used data attribute as in Mike's webinar
-	var cards_html_string="";
-	for(var i = 1; i <= symbols.length ; i++){
+	let cards_html_string="";
+	for(let i = 1; i <= symbols.length ; i++) {
 		cards_html_string = cards_html_string + "<li class='card' data-symbol='"+ symbols[i-1] + "'><i class='fa fa-"+ symbols[i-1] + "'></i></li>";
 	}
 
 	//Third step: update deck elemnt's innerHTML 
-	var deck_element = document.querySelector('.deck');
+	let deck_element = document.querySelector('.deck');
 	deck_element.innerHTML = cards_html_string;
 }
 
 //call new_game() function to play
 new_game();
 
-function new_game(){
+function new_game() {
 
 	reinitialize();
 	prepare_deck();
@@ -69,10 +99,9 @@ function new_game(){
  	* Create a list that holds all of your cards
  	*/
 
-	var cards = document.querySelectorAll('.card');
- 	cards.forEach(function(card){
- 		card.addEventListener('click',function(e)
- 		{
+	let cards = document.querySelectorAll('.card',);
+ 	cards.forEach(function(card) {
+ 		card.addEventListener('click',function(e) {
  			card_clicked(card,e);
  		});
  	});
@@ -90,60 +119,93 @@ function new_game(){
  *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
  */
 
- function card_clicked(card,e){
+ function card_clicked(card,e) {
 
- 	if(opened_cards.length === 1 && e.target === opened_cards[0])
-		{
-			alert("This card is already open, please choose another card");
-			return;
-		}
+ 	start_timing();
+ 	//first card: dispaly symbol on card and push it in opened_cards for later comparing.
+ 	if(opened_cards.length === 0) {
 
-		//display symbol on the card.
-		display_symbol(card);
+ 		if(card.classList.contains('match')) {
+ 			setTimeout(function() {
+				card.classList.add('shaking');
+			},10);
 
-		opened_cards.push(card);
+			card.classList.remove('shaking');
+ 		}
+ 		else {
+ 			//display symbol on the card.
+			display_symbol(card);
 
-		if(opened_cards.length === 2)//new pair to compare
-		{
-			if(opened_cards[0].dataset.symbol === opened_cards[1].dataset.symbol)
-			{
-				matched();
-				
-				//after calling matched(), check if we reached end of game(8 matches), if yes then alert message to user.
-				var output = "";
- 				if(matches === 8){
-			 		if(moves <= 7){
-			 			output = "WOW, Excellent Job!";
-			 		}
-			 		
-			 		if(moves>7 && moves<=13){
-			 			output = "Good Job!";
-			 		}
-			 		
-			 		if(moves>13){
-			 			output = "You can do better."
-			 		}
+	 		//add it to opened_cards array for comparing.
+			opened_cards.push(card);
 
-			 		alert(output + " You finished the game using " + moves + " mismatches.");
-			 	}
+			first = opened_cards[0];
+ 		}
+ 	}
+ 	else {
+
+ 		//if this is a SECOND card (this condition to prevent user from opening more than 2 cards at a time)
+	 	if(opened_cards.length === 1) {
+
+	 		//remove shaking calss from first card in case class was added.
+			if(first.classList.contains('shaking')) {
+				first.classList.remove('shaking');
 			}
-			else
-			{
-				not_matched();
-				update_moves();//updates moves and stars(depending on moves value)
+
+	 		//first we check if same card is chosen, do nothing.
+		 	if(e.currentTarget === first) {
+				setTimeout(function() {
+					first.classList.add('shaking');
+				},10);
+			}
+
+			//else display symbol on second card, push it to opened_cards array then compare both cards.
+			else {
+				//if second card choose was an already matched card then
+				if(card.classList.contains('match')) {
+		 			setTimeout(function() {
+						card.classList.add('shaking');
+					},10);
+	 			}
+
+	 			else {
+					//display symbol on the card.
+					display_symbol(card);
+
+					//add it to opened_cards array for comparing.
+					opened_cards.push(card);
+
+					second = opened_cards[1];
+
+					//updates moves and stars(depending on moves value), everytime a user opens a pair of cards
+					update_moves();
+
+					//compare cards if matching
+					if(first.dataset.symbol === second.dataset.symbol) {
+						matched();
+						
+						//after calling matched(), check if we reached end of game(8 matches), if yes then call end_game() function.
+						if(matches === 8) {
+							end_game();
+					 	}
+					}
+					//cards do not match
+					else {
+						not_matched();
+					}
+				}
 			}
 		}
+	}
  }
 
- function display_symbol(c)
-{
-	//display symbole of the last card clicked
+ function display_symbol(c) {
+	//display symbol of the last card clicked
 	c.classList.add('open','show');
 }
 
 
-function update_moves()
-{
+function update_moves() {
 	//increment moves
 	moves++;
 
@@ -151,57 +213,53 @@ function update_moves()
 	document.querySelector('.moves').textContent = moves;
 
 	//update stars depemding on moves value
-	if(moves > 7 ) //lose one star if more than 10 moves
-	{
+	if(moves > 10 ) {//lose one star if more than 10 moves
 		stars[0].style.visibility = "hidden";
 	}
 
-	if(moves > 13 ) //lose the second star if more than 15 moves
-	{
+	if(moves > 15 ) {//lose the second star if more than 15 moves
 		stars[1].style.visibility = "hidden";
 	}
 
-	if(moves > 18 ) //lose the third (last) star if more than 20 moves
-	{
+	if(moves > 20 ) {//lose the third (last) star if more than 20 moves
 		stars[2].style.visibility ="hidden";
 	}
 }
 
 
-function matched()
-{
+function matched() {
 	//add class "match" to the cards being compared
-	opened_cards[0].classList.add('match');
-	opened_cards[1].classList.add('match');
+	first.classList.add('match');
+	second.classList.add('match');
 	
 	//increase matches counter
 	matches++;
 
-	//remove event listener from matched cards
-	opened_cards.forEach(function(oc){
-		oc.removeEventListener('click',card_clicked);
-	});
-
 	opened_cards = [];
+	first = "";
+	second = "";
 }
 
-function not_matched()
-{
+function not_matched() {
 	//if not matched, remove the classes(open & show) from cards in the opened cards array
 	//keep cards open for 1 second before hiding them
-	setTimeout(function(){
-		opened_cards.forEach(function(c){
+	setTimeout(function() {
+		opened_cards.forEach(function(c) {
 			c.classList.remove('open','show');
 		});
+
 		opened_cards = [];
-	},1000);
+		first = "";
+		second = "";
+	},800);
 }
 
 //for EVERY game re/initialize variables
-function reinitialize()
-{
+function reinitialize() {
 	//every new game we empty the array and reinitialize the matches and moves variables
 	opened_cards = [];
+	first ="";
+	second = "";
 	matches = 0;
 	moves = 0;
 	
@@ -209,8 +267,79 @@ function reinitialize()
 	document.querySelector('.moves').textContent = moves;
 
 	//All 3 stars are visible at the begining of each game
-	for(var i=0;i<3;i++)
-	{
+	for(let i=0;i<3;i++) {
 		stars[i].style.visibility = "visible";
 	}
+
+	if(setIntervalValue !== "") {
+		//stop setInterval function
+		clearInterval(setIntervalValue); 
+		setIntervalValue = "";
+		//reinitialize totalSeconds
+		totalSeconds = 0;
+	}
+
+	//reinitialize seconds and minutes labels to 00
+	secondsLabel.innerHTML = "00";
+	minutesLabel.innerHTML = "00";
+}
+
+function end_game() {
+	let result = "";
+	if(moves <= 10) {
+		result = "WOW, Excellent Job!";
+	}
+		
+	if(moves>10 && moves<=15) {
+		result = "Good Job!";
+	}
+		
+	if(moves>15) {
+		result = "You can do better."
+	}
+
+	end_timing();
+
+	// Add output text to modal.
+	let outputElement = document.querySelector('#output');
+	let minutesText = "";
+	if(minutesLabel.innerText > "00") {
+		minutesText = minutesLabel.innerText + (minutesLabel.innerText === "01" ? " minute and" : " minutes and");
+	}
+
+	let secondsText = secondsLabel.innerText + (secondsLabel.innerText === "01" ? " second" : " seconds");
+
+	outputElement.innerHTML = "<strong>" + result + "</strong><br>You finished the game in " + minutesText + secondsText +", using " + moves + " moves." ;
+
+	//display modal
+	modal.style.display = "block";
+}
+
+
+//Timer code: https://stackoverflow.com/questions/5517597/plain-count-up-timer-in-javascript
+//******************************************************************************************
+function start_timing() {
+	if(setIntervalValue === "") {
+		setIntervalValue = setInterval(setTime, 1000);
+	}
+}
+
+function setTime() {
+  ++totalSeconds;
+  secondsLabel.innerHTML = pad(totalSeconds % 60);
+  minutesLabel.innerHTML = pad(parseInt(totalSeconds / 60));
+}
+
+function pad(val) {
+  var valString = val + "";
+  if (valString.length < 2) {
+    return "0" + valString;
+  } else {
+    return valString;
+  }
+}
+//******************************************************************************************
+
+function end_timing() {
+	clearInterval(setIntervalValue);
 }
